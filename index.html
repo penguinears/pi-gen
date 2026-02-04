@@ -2,333 +2,248 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pilingo – Compute π Together</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilingo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* ============================
-   FACEBOOK 2004 THEME
-   ============================ */
-
-body {
-  margin: 0;
-  padding: 0;
-  background: #ffffff;
-  font-family: "Tahoma", "Verdana", sans-serif;
-  color: #000;
+body{
+    margin:0;
+    background:#e4e9f2;
+    font-family:Tahoma,Arial,sans-serif;
+    color:#1d2a5b;
 }
 
-#fb-header {
-  background: #3b5998;
-  color: white;
-  padding: 10px 20px;
-  font-size: 22px;
-  font-weight: bold;
-  border-bottom: 1px solid #2a4887;
+.topbar{
+    background:#3b5998;
+    color:white;
+    padding:10px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
 
-#fb-subheader {
-  background: #d8dfea;
-  padding: 8px 20px;
-  font-size: 14px;
-  border-bottom: 1px solid #b5c1d8;
+.nav button{
+    background:#4b6fbf;
+    border:1px solid #2d4373;
+    color:white;
+    padding:6px 10px;
+    margin-left:6px;
+    cursor:pointer;
 }
 
-#container {
-  width: 760px;
-  margin: 20px auto;
+.container{
+    max-width:820px;
+    margin:30px auto;
+    background:white;
+    border:1px solid #c3cde0;
+    padding:20px;
 }
 
-.fb-box {
-  border: 1px solid #b5c1d8;
-  background: #f7f7f7;
-  padding: 12px;
-  margin-bottom: 20px;
+.screen{display:none;}
+.active{display:block;}
+
+.pi-row{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:22px;
+    margin:20px 0;
+    overflow:hidden;
+    border:1px solid #c3cde0;
+    padding:10px;
+    background:#f7f9fc;
 }
 
-.fb-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #3b5998;
-  margin-bottom: 8px;
+.digit{
+    width:26px;
+    height:34px;
+    border:1px solid #aab3c8;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    font-weight:bold;
 }
 
-.fb-label {
-  font-size: 12px;
-  color: #555;
-  margin-bottom: 4px;
+.current{background:#3b5998;color:white;}
+.future{background:#e9edf6;color:#8a94b8;}
+
+.slide{transform:translateX(-30px);opacity:0;transition:.2s;}
+
+.panel{
+    border:1px solid #c3cde0;
+    background:#f7f9fc;
+    padding:10px;
+    display:flex;
+    justify-content:space-between;
 }
 
-.fb-value {
-  font-family: "Courier New", monospace;
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 6px;
-  margin-bottom: 10px;
-  font-size: 13px;
-}
-
-#log {
-  height: 150px;
-  overflow-y: auto;
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 6px;
-  font-size: 11px;
-  font-family: "Courier New", monospace;
-}
-
-.status {
-  font-size: 12px;
-  margin-top: 6px;
-}
-
-.error {
-  color: red;
-  font-size: 12px;
-  margin-top: 6px;
+#stream{
+    font-family:monospace;
+    font-size:16px;
+    line-height:1.5;
+    height:300px;
+    overflow-y:auto;
+    border:1px solid #c3cde0;
+    padding:10px;
+    background:#f7f9fc;
+    white-space:wrap;
 }
 </style>
 </head>
 
 <body>
 
-<div id="fb-header">thefacebook</div>
-<div id="fb-subheader">Pilingo – Distributed π Computing Network</div>
+<div class="topbar">
+    <strong>Pilingo</strong>
+    <div class="nav">
+        <button onclick="show('home')">Home</button>
+        <button onclick="show('game')">Play Game</button>
+        <button onclick="show('gen')">Generate</button>
+    </div>
+</div>
 
-<div id="container">
+<div class="container">
 
-  <div class="fb-box">
-    <div class="fb-title">Global π State</div>
+<!-- HOME -->
+<div class="screen active" id="home">
+<h2>What is Pi?</h2>
+<p>
+Succinctly, pi—which is written as the Greek letter for p, or π—is the ratio of the circumference of any circle to the diameter of that circle. Regardless of the circle's size, this ratio will always equal pi. In decimal form, the value of pi is approximately 3.14.
 
-    <div class="fb-label">Total Digits (hex)</div>
-    <div class="fb-value" id="totalDigitsDisplay">0</div>
+But pi is an irrational number, meaning that its decimal form neither ends (like 1/4 = 0.25) nor becomes repetitive (like 1/6 = 0.166666...). (To only 18 decimal places, pi is 3.141592653589793238.) Hence, it is useful to have shorthand for this ratio of circumference to diameter.
 
-    <div class="fb-label">Latest Chunk</div>
-    <div class="fb-value" id="latestChunkDisplay">—</div>
 
-    <div class="fb-label">Contributors</div>
-    <div class="fb-value" id="contributorsDisplay">0</div>
+According to Petr Beckmann's A History of Pi, the Greek letter π was first used for this purpose by William Jones in 1706, probably as an abbreviation of periphery, and became standard mathematical notation roughly 30 years later.
 
-    <div class="fb-label">π Tail</div>
-    <div class="fb-value">3.<span id="piTail">?</span></div>
-  </div>
+Try a brief experiment: Using a compass, draw a circle. Take one piece of string and place it on top of the circle, exactly once around. Now straighten out the string; its length is called the circumference of the circle. Measure the circumference with a ruler. Next, measure the diameter of the circle, which is the length from any point on the circle straight through its center to another point on the opposite side. (The diameter is twice the radius, the length from any point on the circle to its center.)
 
-  <div class="fb-box">
-    <div class="fb-title">Your Worker</div>
 
-    <div class="fb-label">Worker ID</div>
-    <div class="fb-value" id="workerIdBadge">Loading…</div>
+If you divide the circumference of the circle by the diameter, you will get approximately 3.14—no matter what size circle you drew! A larger circle will have a larger circumference and a larger radius, but the ratio will always be the same. If you could measure and divide perfectly, you would get 3.141592653589793238..., or pi.
 
-    <div class="fb-label">Current Chunk</div>
-    <div class="fb-value" id="currentChunkDisplay">Idle…</div>
+By the start of the 20th century, about 500 digits of pi were known.
 
-    <div class="status" id="statusText">Starting worker…</div>
-    <div class="error" id="errorText"></div>
+Otherwise said, if you cut several pieces of string equal in length to the diameter, you will need a little more than three of them to cover the circumference of the circle.
 
-    <div class="fb-label" style="margin-top:10px;">Activity Log</div>
-    <div id="log"></div>
-  </div>
+Pi is most commonly used in certain computations regarding circles. Pi not only relates circumference and diameter. Amazingly, it also connects the diameter or radius of a circle with the area of that circle by the formula: the area is equal to pi times the radius squared. Additionally, pi shows up often unexpectedly in many mathematical situations. For example, the sum of the infinite series
+
+
+1 + 1/4 + 1/9 + 1/16 + 1/25 + ... + 1/n2 + ... is π2/6
+
+The importance of pi has been recognized for at least 4,000 years. A History of Pi notes that by 2000 B.C., "the Babylonians and the Egyptians (at least) were aware of the existence and significance of the constant π," recognizing that every circle has the same ratio of circumference to diameter. Both the Babylonians and Egyptians had rough numerical approximations to the value of pi, and later mathematicians in ancient Greece, particularly Archimedes, improved on those approximations.
+
+By the start of the 20th century, about 500 digits of pi were known. With computation advances, thanks to computers, we now know more than the first six billion digits of pi.
+</p>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+<h2>Guess the next digit of π</h2>
+<div class="pi-row" id="piRow"></div>
+<input id="guessInput" maxlength="1">
+<div class="panel">
+<div>Score: <span id="score">0</span></div>
+<div>Lives: <span id="lives">3</span></div>
+</div>
+<div id="msg"></div>
+</div>
+
+<!-- GENERATE -->
+<div class="screen" id="gen">
+<h2>Live Pi Generator</h2>
+<p>Leave this open and it will generate digits of π forever.</p>
+<div id="stream">3.</div>
+</div>
 
 </div>
 
-<!-- ============================
-     PILINGO SCRIPT
-     ============================ -->
-
 <script>
-const STORE_URL = "https://pilingo-2bef7-default-rtdb.firebaseio.com/pilingo.json";
-const CHUNK_SIZE = 8;
-const MIN_DELAY_MS = 3000;
-const MAX_DELAY_MS = 10000;
-const MAX_WRITE_ATTEMPTS = 3;
-
-const totalDigitsDisplay = document.getElementById("totalDigitsDisplay");
-const contributorsDisplay = document.getElementById("contributorsDisplay");
-const latestChunkDisplay = document.getElementById("latestChunkDisplay");
-const currentChunkDisplay = document.getElementById("currentChunkDisplay");
-const statusText = document.getElementById("statusText");
-const errorText = document.getElementById("errorText");
-const piTail = document.getElementById("piTail");
-const logEl = document.getElementById("log");
-const workerIdBadge = document.getElementById("workerIdBadge");
-
-function log(msg) {
-  const entry = document.createElement("div");
-  entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  logEl.prepend(entry);
+function show(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
 }
 
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-const workerId = "W-" + Math.random().toString(16).slice(2, 8);
-workerIdBadge.textContent = workerId;
-
-/* ============================
-   BBP HEX π DIGITS
-   ============================ */
-
-function modPow16(exp, mod) {
-  let result = 1;
-  let base = 16 % mod;
-  let e = exp;
-  while (e > 0) {
-    if (e & 1) result = (result * base) % mod;
-    base = (base * base) % mod;
-    e >>= 1;
-  }
-  return result;
-}
-
-function bbpTerm(j, n) {
-  let sum = 0;
-  for (let k = 0; k <= n; k++) {
-    const denom = 8 * k + j;
-    const pow = n - k;
-    const term = modPow16(pow, denom) / denom;
-    sum = (sum + term) % 1;
-  }
-  let k = n + 1;
-  while (true) {
-    const denom = 8 * k + j;
-    const term = Math.pow(16, n - k) / denom;
-    if (term < 1e-17) break;
-    sum += term;
-    sum %= 1;
-    k++;
-  }
-  return sum;
-}
-
-function bbpHexDigit(n) {
-  const x = 4 * bbpTerm(1, n) - 2 * bbpTerm(4, n) - bbpTerm(5, n) - bbpTerm(6, n);
-  const frac = x - Math.floor(x);
-  return Math.floor(16 * frac);
-}
-
-function computeHexChunk(startIndex, length) {
-  let hex = "";
-  for (let i = 0; i < length; i++) {
-    hex += bbpHexDigit(startIndex + i).toString(16);
-  }
-  return hex;
-}
-
-/* ============================
-   JSON STORE HELPERS
-   ============================ */
-
-async function fetchState() {
-  const res = await fetch(STORE_URL + "?t=" + Date.now());
-  const data = await res.json();
-  return {
-    totalDigits: data.totalDigits || 0,
-    latestChunk: data.latestChunk || "",
-    contributors: data.contributors || 0
-  };
-}
-
-async function writeState(expectedTotalDigits, newState) {
-  const current = await fetchState();
-  if (current.totalDigits !== expectedTotalDigits) {
-    log("Collision detected.");
-    return { success: false };
-  }
-  await fetch(STORE_URL, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(newState)
-  });
-  return { success: true };
-}
-
-/* ============================
-   CONTRIBUTORS
-   ============================ */
-
-async function registerContributorOnce() {
-  const key = "pilingo_contributor_registered";
-  if (localStorage.getItem(key)) return;
-
-  const state = await fetchState();
-  const newState = {
-    totalDigits: state.totalDigits,
-    latestChunk: state.latestChunk,
-    contributors: state.contributors + 1
-  };
-
-  const result = await writeState(state.totalDigits, newState);
-  if (result.success) {
-    localStorage.setItem(key, "1");
-    updateUI(newState);
-  }
-}
-
-/* ============================
-   UI UPDATE
-   ============================ */
-
-function updateUI(state) {
-  totalDigitsDisplay.textContent = state.totalDigits;
-  contributorsDisplay.textContent = state.contributors;
-  latestChunkDisplay.textContent = state.latestChunk || "—";
-  piTail.textContent = state.latestChunk || "…";
-}
-
-/* ============================
-   WORKER LOOP
-   ============================ */
-
-async function workerLoop() {
-  while (true) {
-    try {
-      const state = await fetchState();
-      updateUI(state);
-
-      const startIndex = state.totalDigits;
-      const chunk = computeHexChunk(startIndex, CHUNK_SIZE);
-
-      currentChunkDisplay.textContent = `Offset ${startIndex}`;
-      statusText.textContent = "Computing…";
-
-      await new Promise(r => setTimeout(r, randInt(MIN_DELAY_MS, MAX_DELAY_MS)));
-
-      const latest = await fetchState();
-      if (latest.totalDigits !== state.totalDigits) continue;
-
-      const newState = {
-        totalDigits: latest.totalDigits + CHUNK_SIZE,
-        latestChunk: chunk,
-        contributors: latest.contributors
-      };
-
-      const result = await writeState(latest.totalDigits, newState);
-      if (result.success) {
-        updateUI(newState);
-        log("Contributed chunk: " + chunk);
-      }
-
-      await new Promise(r => setTimeout(r, randInt(2000, 5000)));
-
-    } catch (err) {
-      errorText.textContent = err.message;
-      await new Promise(r => setTimeout(r, 5000));
+function* piGenerator(){
+    let q=1n,r=0n,t=1n,k=1n,n=3n,l=3n;
+    while(true){
+        if(4n*q+r-t<n*t){
+            yield n;
+            let nr=10n*(r-n*t);
+            n=(10n*(3n*q+r))/t-10n*n;
+            q*=10n;
+            r=nr;
+        }else{
+            let nr=(2n*q+r)*l;
+            let nn=(q*(7n*k)+2n+r*l)/(t*l);
+            q*=k;
+            t*=l;
+            l+=2n;
+            k+=1n;
+            r=nr;
+            n=nn;
+        }
     }
-  }
 }
 
-/* ============================
-   BOOT
-   ============================ */
+let pi, digits=[], lives=3, score=0;
+const piRow=document.getElementById("piRow");
+const input=document.getElementById("guessInput");
+const livesEl=document.getElementById("lives");
+const scoreEl=document.getElementById("score");
+const msg=document.getElementById("msg");
 
-(async function boot() {
-  const state = await fetchState();
-  updateUI(state);
-  registerContributorOnce();
-  workerLoop();
-})();
+function render(){
+    piRow.innerHTML="<span>3.</span>";
+    digits.slice(-8).forEach(d=>{
+        let b=document.createElement("div");
+        b.className="digit";
+        b.textContent=d;
+        piRow.appendChild(b);
+    });
+    let c=document.createElement("div");
+    c.className="digit current";
+    c.textContent="?";
+    piRow.appendChild(c);
+    for(let i=0;i<3;i++){
+        let f=document.createElement("div");
+        f.className="digit future";
+        piRow.appendChild(f);
+    }
+}
+
+input.addEventListener("input",()=>{
+    const v=input.value; input.value="";
+    const next=pi.next().value.toString();
+    if(v===next){
+        digits.push(v); score++; scoreEl.textContent=score; animate();
+    }else{
+        lives--; livesEl.textContent=lives;
+        msg.textContent="Wrong, it was "+next;
+        if(lives===0){msg.textContent="Game Over"; input.disabled=true;}
+    }
+});
+
+function animate(){
+    document.querySelectorAll(".digit").forEach(b=>b.classList.add("slide"));
+    setTimeout(render,180);
+}
+
+function resetGame(){
+    pi=piGenerator(); pi.next();
+    digits=[]; lives=3; score=0;
+    livesEl.textContent=lives; scoreEl.textContent=score;
+    input.disabled=false; msg.textContent="";
+    render();
+}
+resetGame();
+
+/* Live generator */
+const stream=document.getElementById("stream");
+const gen=piGenerator(); gen.next();
+setInterval(()=>{
+    stream.textContent+=gen.next().value;
+    stream.scrollTop=stream.scrollHeight;
+},100);
 </script>
 
 </body>

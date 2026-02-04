@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pilingo – Compute π Together</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* ============================
+   FACEBOOK 2004 THEME
+   ============================ */
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  font-family: "Tahoma", "Verdana", sans-serif;
+  color: #000;
+}
+
+#fb-header {
+  background: #3b5998;
+  color: white;
+  padding: 10px 20px;
+  font-size: 22px;
+  font-weight: bold;
+  border-bottom: 1px solid #2a4887;
+}
+
+#fb-subheader {
+  background: #d8dfea;
+  padding: 8px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid #b5c1d8;
+}
+
+#container {
+  width: 760px;
+  margin: 20px auto;
+}
+
+.fb-box {
+  border: 1px solid #b5c1d8;
+  background: #f7f7f7;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+.fb-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #3b5998;
+  margin-bottom: 8px;
+}
+
+.fb-label {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.fb-value {
+  font-family: "Courier New", monospace;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+#log {
+  height: 150px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 6px;
+  font-size: 11px;
+  font-family: "Courier New", monospace;
+}
+
+.status {
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+  margin-top: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="fb-header">thefacebook</div>
+<div id="fb-subheader">Pilingo – Distributed π Computing Network</div>
+
+<div id="container">
+
+  <div class="fb-box">
+    <div class="fb-title">Global π State</div>
+
+    <div class="fb-label">Total Digits (hex)</div>
+    <div class="fb-value" id="totalDigitsDisplay">0</div>
+
+    <div class="fb-label">Latest Chunk</div>
+    <div class="fb-value" id="latestChunkDisplay">—</div>
+
+    <div class="fb-label">Contributors</div>
+    <div class="fb-value" id="contributorsDisplay">0</div>
+
+    <div class="fb-label">π Tail</div>
+    <div class="fb-value">3.<span id="piTail">?</span></div>
+  </div>
+
+  <div class="fb-box">
+    <div class="fb-title">Your Worker</div>
+
+    <div class="fb-label">Worker ID</div>
+    <div class="fb-value" id="workerIdBadge">Loading…</div>
+
+    <div class="fb-label">Current Chunk</div>
+    <div class="fb-value" id="currentChunkDisplay">Idle…</div>
+
+    <div class="status" id="statusText">Starting worker…</div>
+    <div class="error" id="errorText"></div>
+
+    <div class="fb-label" style="margin-top:10px;">Activity Log</div>
+    <div id="log"></div>
+  </div>
+
+</div>
+
+<!-- ============================
+     PILINGO SCRIPT
+     ============================ -->
+
+<script>
+const STORE_URL = "https://pilingo-2bef7-default-rtdb.firebaseio.com/pilingo.json";
+const CHUNK_SIZE = 8;
+const MIN_DELAY_MS = 3000;
+const MAX_DELAY_MS = 10000;
+const MAX_WRITE_ATTEMPTS = 3;
+
+const totalDigitsDisplay = document.getElementById("totalDigitsDisplay");
+const contributorsDisplay = document.getElementById("contributorsDisplay");
+const latestChunkDisplay = document.getElementById("latestChunkDisplay");
+const currentChunkDisplay = document.getElementById("currentChunkDisplay");
+const statusText = document.getElementById("statusText");
+const errorText = document.getElementById("errorText");
+const piTail = document.getElementById("piTail");
+const logEl = document.getElementById("log");
+const workerIdBadge = document.getElementById("workerIdBadge");
+
+function log(msg) {
+  const entry = document.createElement("div");
+  entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  logEl.prepend(entry);
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const workerId = "W-" + Math.random().toString(16).slice(2, 8);
+workerIdBadge.textContent = workerId;
+
+/* ============================
+   BBP HEX π DIGITS
+   ============================ */
+
+function modPow16(exp, mod) {
+  let result = 1;
+  let base = 16 % mod;
+  let e = exp;
+  while (e > 0) {
+    if (e & 1) result = (result * base) % mod;
+    base = (base * base) % mod;
+    e >>= 1;
+  }
+  return result;
+}
+
+function bbpTerm(j, n) {
+  let sum = 0;
+  for (let k = 0; k <= n; k++) {
+    const denom = 8 * k + j;
+    const pow = n - k;
+    const term = modPow16(pow, denom) / denom;
+    sum = (sum + term) % 1;
+  }
+  let k = n + 1;
+  while (true) {
+    const denom = 8 * k + j;
+    const term = Math.pow(16, n - k) / denom;
+    if (term < 1e-17) break;
+    sum += term;
+    sum %= 1;
+    k++;
+  }
+  return sum;
+}
+
+function bbpHexDigit(n) {
+  const x = 4 * bbpTerm(1, n) - 2 * bbpTerm(4, n) - bbpTerm(5, n) - bbpTerm(6, n);
+  const frac = x - Math.floor(x);
+  return Math.floor(16 * frac);
+}
+
+function computeHexChunk(startIndex, length) {
+  let hex = "";
+  for (let i = 0; i < length; i++) {
+    hex += bbpHexDigit(startIndex + i).toString(16);
+  }
+  return hex;
+}
+
+/* ============================
+   JSON STORE HELPERS
+   ============================ */
+
+async function fetchState() {
+  const res = await fetch(STORE_URL + "?t=" + Date.now());
+  const data = await res.json();
+  return {
+    totalDigits: data.totalDigits || 0,
+    latestChunk: data.latestChunk || "",
+    contributors: data.contributors || 0
+  };
+}
+
+async function writeState(expectedTotalDigits, newState) {
+  const current = await fetchState();
+  if (current.totalDigits !== expectedTotalDigits) {
+    log("Collision detected.");
+    return { success: false };
+  }
+  await fetch(STORE_URL, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newState)
+  });
+  return { success: true };
+}
+
+/* ============================
+   CONTRIBUTORS
+   ============================ */
+
+async function registerContributorOnce() {
+  const key = "pilingo_contributor_registered";
+  if (localStorage.getItem(key)) return;
+
+  const state = await fetchState();
+  const newState = {
+    totalDigits: state.totalDigits,
+    latestChunk: state.latestChunk,
+    contributors: state.contributors + 1
+  };
+
+  const result = await writeState(state.totalDigits, newState);
+  if (result.success) {
+    localStorage.setItem(key, "1");
+    updateUI(newState);
+  }
+}
+
+/* ============================
+   UI UPDATE
+   ============================ */
+
+function updateUI(state) {
+  totalDigitsDisplay.textContent = state.totalDigits;
+  contributorsDisplay.textContent = state.contributors;
+  latestChunkDisplay.textContent = state.latestChunk || "—";
+  piTail.textContent = state.latestChunk || "…";
+}
+
+/* ============================
+   WORKER LOOP
+   ============================ */
+
+async function workerLoop() {
+  while (true) {
+    try {
+      const state = await fetchState();
+      updateUI(state);
+
+      const startIndex = state.totalDigits;
+      const chunk = computeHexChunk(startIndex, CHUNK_SIZE);
+
+      currentChunkDisplay.textContent = `Offset ${startIndex}`;
+      statusText.textContent = "Computing…";
+
+      await new Promise(r => setTimeout(r, randInt(MIN_DELAY_MS, MAX_DELAY_MS)));
+
+      const latest = await fetchState();
+      if (latest.totalDigits !== state.totalDigits) continue;
+
+      const newState = {
+        totalDigits: latest.totalDigits + CHUNK_SIZE,
+        latestChunk: chunk,
+        contributors: latest.contributors
+      };
+
+      const result = await writeState(latest.totalDigits, newState);
+      if (result.success) {
+        updateUI(newState);
+        log("Contributed chunk: " + chunk);
+      }
+
+      await new Promise(r => setTimeout(r, randInt(2000, 5000)));
+
+    } catch (err) {
+      errorText.textContent = err.message;
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  }
+}
+
+/* ============================
+   BOOT
+   ============================ */
+
+(async function boot() {
+  const state = await fetchState();
+  updateUI(state);
+  registerContributorOnce();
+  workerLoop();
+})();
+</script>
+
+</body>
+</html>
